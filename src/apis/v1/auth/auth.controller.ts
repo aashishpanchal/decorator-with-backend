@@ -2,10 +2,12 @@ import { http } from "@core/curd";
 import httpStatus from "http-status";
 import { Request, Response } from "express";
 import { valid } from "@/common/decorators";
-import { RegisterDto, TokenDto } from "./dto";
+import { verifyToken } from "./helpers";
 import { authService } from "./services";
+import { RegisterDto, TokenDto } from "./dto";
 import { jwtAuth, localAuth } from "./passport";
 
+// auth controller
 export class AuthController {
   @http.post("/login")
   @http.middle(localAuth)
@@ -19,6 +21,13 @@ export class AuthController {
   async register(req: Request, res: Response) {
     const user = await authService.register(req.body);
     res.status(httpStatus.OK).json(user);
+  }
+
+  @valid.body(TokenDto)
+  @http.post("/verify-token")
+  async verifyToken(req: Request, res: Response) {
+    await verifyToken(req.body["token"]);
+    res.status(httpStatus.OK).json({ message: "Token is valid" });
   }
 
   @valid.body(TokenDto)

@@ -4,7 +4,29 @@ import settings from "@conf/settings";
 import createHttpError from "http-errors";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { BlackListModel, UserDocument } from "@/models";
+import { Messages } from "../constants";
 
+// this function is used to verify all token
+export async function verifyToken(token: string) {
+  try {
+    const payload = jwt.verify(token, this.secretKey) as JwtPayload;
+
+    const { jti } = payload;
+
+    // find token is blacklisted or not
+    const blacklistToken = await BlackListModel.findOne({ jti });
+
+    // check token is blacklisted or not
+    if (blacklistToken?.isBlackListed)
+      throw new createHttpError.Unauthorized(Messages.tokenBlacklisted);
+
+    return payload;
+  } catch (error) {
+    throw new createHttpError.BadRequest(Messages.tokenInvalid);
+  }
+}
+
+// this class to inherit to generate token
 export abstract class Token {
   protected abstract save: boolean;
   protected abstract exp: string;
@@ -17,7 +39,7 @@ export abstract class Token {
     const blacklistToken = await BlackListModel.findOne({ jti });
 
     if (blacklistToken?.isBlackListed)
-      throw new createHttpError.Unauthorized("Token is blacklisted");
+      throw new createHttpError.Unauthorized(Messages.tokenBlacklisted);
   }
 
   private async addToken(options: {
@@ -91,7 +113,7 @@ export abstract class Token {
       const payload = jwt.verify(token, this.secretKey) as JwtPayload;
       // check token type valid or not
       if (payload.type !== this.tokenType)
-        throw new createHttpError.Unauthorized("Invalid token type");
+        throw new createHttpError.Unauthorized(Messages.tokenTypeInvalid);
 
       if (this.save)
         // check token is in black list or not
@@ -99,7 +121,7 @@ export abstract class Token {
 
       return payload;
     } catch (error) {
-      throw new createHttpError.BadRequest("Token is invalid or expired");
+      throw new createHttpError.BadRequest(Messages.tokenInvalid);
     }
   }
 }

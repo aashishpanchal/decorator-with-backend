@@ -2,6 +2,7 @@ import { UserModel } from "@/models";
 import settings from "@conf/settings";
 import createHttpError from "http-errors";
 import { Strategy, ExtractJwt } from "passport-jwt";
+import { Messages } from "../constants";
 
 export const jwtAuthStrategy = new Strategy(
   {
@@ -13,15 +14,12 @@ export const jwtAuthStrategy = new Strategy(
     try {
       const { sub } = payload;
 
-      if (!sub)
-        throw new createHttpError.BadRequest(
-          "Token contained no recognizable user identification"
-        );
+      if (!sub) throw new createHttpError.BadRequest(Messages.tokenSubInvalid);
 
       const user = await UserModel.findOne({ _id: sub });
 
       if (!user.isActive)
-        throw new createHttpError.Forbidden("User is inactive");
+        throw new createHttpError.Forbidden(Messages.userAccountNotActive);
 
       done(null, user);
     } catch (error) {

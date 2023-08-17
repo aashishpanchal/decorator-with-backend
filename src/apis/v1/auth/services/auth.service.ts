@@ -1,6 +1,6 @@
 import createHttpError from "http-errors";
 import { RegisterDto } from "../dto";
-import { TokenType } from "../constants";
+import { TokenType, Messages } from "../constants";
 import { refreshToken } from "./auth-token.service";
 import { UserDocument, UserModel } from "@/models";
 
@@ -8,10 +8,10 @@ class AuthService {
   async auth(username: string, password: string) {
     const user = await UserModel.findOne({ username }, "+password");
 
-    if (!user) throw createHttpError.NotFound("User account not found.");
+    if (!user) throw createHttpError.NotFound(Messages.userAccountNotFound);
 
     if (!(await user.checkPassword(password)))
-      throw createHttpError.Unauthorized("please enter valid credentials");
+      throw createHttpError.Unauthorized(Messages.invalidCredentials);
 
     return await user.updateLastLogin();
   }
@@ -21,7 +21,7 @@ class AuthService {
 
     const user = await UserModel.findOne({ username });
 
-    if (user) throw createHttpError.Conflict("User already exists");
+    if (user) throw createHttpError.Conflict(Messages.userAccountAlreadyExists);
 
     const newUser = await UserModel.create(registerDto);
 
@@ -48,10 +48,7 @@ class AuthService {
     // get user by id and update last login
     const user = await (await UserModel.findById(sub))?.updateLastLogin();
 
-    if (!user)
-      throw new createHttpError.Unauthorized(
-        "Token contained no recognizable user identification"
-      );
+    if (!user) throw new createHttpError.Unauthorized(Messages.tokenSubInvalid);
 
     // gen new access tokens
     return {

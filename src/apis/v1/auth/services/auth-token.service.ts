@@ -2,12 +2,14 @@ import { Token } from "../helpers";
 import { TokenType } from "../constants";
 import settings from "@conf/settings";
 
+// access token to help to access the protected routes
 class AccessToken extends Token {
   save = false;
   exp = settings.jwt.accessExp;
   tokenType = TokenType.access;
 }
 
+// refresh token to help to refresh the access token
 class RefreshToken extends Token {
   save = true;
   exp = settings.jwt.refreshExp;
